@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import org.apache.kafka.common.config.ConfigException;
 
 import io.aiven.kafka.connect.gcs.templating.Template;
+import io.aiven.kafka.connect.gcs.templating.VariableTemplatePart;
 
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.collect.ImmutableMap;
@@ -101,11 +102,11 @@ final class GcsSinkConfigTest {
         final Template t = new GcsSinkConfig(properties).getFilenameTemplate();
         final String fileName = t.instance()
             .bindVariable("topic", () -> "a")
-            .bindVariable("timestamp", () -> "t")
+            .bindVariable("timestamp", VariableTemplatePart.Parameter::value)
             .bindVariable("partition", () -> "p")
-            .bindVariable("start_offset", () -> "c")
+            .bindVariable("start_offset", VariableTemplatePart.Parameter::value)
             .render();
-        assertEquals("a-t-t-t-p-c.gz", fileName);
+        assertEquals("a-YYYY-MM-dd-p-true.gz", fileName);
     }
 
     @Test
