@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 
 import org.apache.kafka.common.config.ConfigException;
 
+import io.aiven.kafka.connect.gcs.templating.Template;
+
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -84,6 +86,26 @@ final class GcsSinkConfigTest {
             ConfigException.class,   
             () -> new GcsSinkConfig(properties)
         );
+    }
+
+    @Test
+    void acceptMultipleParametersWithTheSameName() {
+        final Map<String, String> properties =
+            ImmutableMap.of(
+                GcsSinkConfig.FILE_NAME_TEMPLATE_CONFIG,
+                "{{topic}}-{{timestamp:unit=YYYY}}-"
+                    + "{{timestamp:unit=MM}}-{{timestamp:unit=dd}}"
+                    + "-{{partition}}-{{start_offset:padding=true}}.gz",
+                "gcs.bucket.name", "asdasd"
+            );
+        final Template t = new GcsSinkConfig(properties).getFilenameTemplate();
+        final String fileName = t.instance()
+            .bindVariable("topic", () -> "a")
+            .bindVariable("timestamp", () -> "t")
+            .bindVariable("partition", () -> "p")
+            .bindVariable("start_offset", () -> "c")
+            .render();
+        assertEquals("a-t-t-t-p-c.gz", fileName);
     }
 
     @Test
